@@ -1,0 +1,46 @@
+package com.yurticikargo.gib.controller;
+
+import com.yurticikargo.gib.dto.request.GIBRequestDto;
+import com.yurticikargo.gib.dto.response.GIBCellResponseDto;
+import com.yurticikargo.gib.exception.ErrorType;
+import com.yurticikargo.gib.exception.GIBExceptionManager;
+import com.yurticikargo.gib.repository.entity.GIBPeriod;
+import com.yurticikargo.gib.service.GIBPostService;
+import com.yurticikargo.gib.service.GIBPeriodService;
+import com.yurticikargo.gib.service.GIBPostRequestService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+
+import static com.yurticikargo.gib.constant.Constant.*;
+@RestController
+@RequestMapping(GIBPOS)
+@CrossOrigin(origins = "*", allowedHeaders = "*")
+@RequiredArgsConstructor
+public class GIBPostControl {
+
+    private final GIBPostService gibPostService;
+    private final GIBPeriodService gibPeriodService;
+    private final GIBPostRequestService gibPostRequestService;
+
+
+    @PostMapping(GET_OR_FIRST_REQUEST_FILE)
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    public ResponseEntity<List<GIBCellResponseDto>> getListTrial(@RequestBody GIBRequestDto dto) {
+
+        if (dto.getToken().isEmpty()) {
+            GIBPeriod period = gibPeriodService.findByDate(dto.getDate().substring(0, 4), dto.getDate().substring(5))
+                    .orElseThrow(()-> new GIBExceptionManager(ErrorType.PERIOD_IS_NOT_EXIST) );
+            return ResponseEntity.ok(gibPostService.getAllCellsByPeriod(period));
+        }
+
+        try{
+            return ResponseEntity.ok( gibPostRequestService.saveAllDataToDB(dto));
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
