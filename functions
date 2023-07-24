@@ -1,0 +1,22 @@
+   //TODO: Burada yeni bir dönem oluşturmuyoruz sadece parametre olarka aldığımız DB deki period dönem bilgisi ile token ile yeni sorguladığımız verileri DB ye kayıt etlmeliyiz.
+    private List<GIBCellResponseDto> updateGibPost(List<PosBilgileriTable> finalList, GIBPeriod gibPeriod) {
+
+        finalList.stream().forEach(posBilgileriTable -> createGIB(GIBCellRequestDto.builder()
+                .posBankName(posBilgileriTable.getPosBankaAdi())
+                .posBankVkn(posBilgileriTable.getPosBankaVkn())
+                .posMemberCompany(posBilgileriTable.getPosUyeIsy())
+                .sum(Double.parseDouble(posBilgileriTable.getToplam())).build(), gibPeriod));
+        return getAllCellsByPeriod(gibPeriod);
+    }
+
+    //TODO: burada database deki mevcut döneme ait verileri temizlemeliyiz
+    public boolean deleteByPeriod(GIBPeriod gibPeriod) {
+        Optional<List<GIBPost>> listOptional =  gibPostRepository.findAllOptionalByGibPeriodAndAndState(gibPeriod, State.ACTIVE);
+
+        listOptional.ifPresent(list -> {
+            list.forEach(item -> item.setState(State.INACTIVE));
+            gibPostRepository.saveAll(list);
+        });
+
+        return true;
+    }
