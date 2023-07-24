@@ -20,3 +20,116 @@
 
         return true;
     }
+
+
+
+
+
+
+
+package com.yurticikargo.gib.service;
+
+import com.yurticikargo.gib.dto.request.GIBCellRequestDto;
+import com.yurticikargo.gib.dto.response.GIBCellResponseDto;
+import com.yurticikargo.gib.exception.ErrorType;
+import com.yurticikargo.gib.exception.GIBExceptionManager;
+import com.yurticikargo.gib.repository.enums.State;
+import com.yurticikargo.gib.utility.postislemleri.dto.PosBilgileriTable;
+import com.yurticikargo.gib.repository.GIBPostRepository;
+import com.yurticikargo.gib.repository.entity.GIBPost;
+import com.yurticikargo.gib.repository.entity.GIBPeriod;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class GIBPostService {
+    private final GIBPostRepository gibPostRepository;
+    private  final GIBPeriodService gibPeriodService;
+
+    public List<GIBCellResponseDto> saveAll(List<PosBilgileriTable> finalList, String year, String month){
+        Optional<GIBPeriod> dbPeriod = gibPeriodService.findByDate(year,month);
+
+        if(dbPeriod.isPresent()){
+            deleteByPeriod(dbPeriod.get());
+           return updateGibPost(finalList, dbPeriod.get());
+
+        }
+
+        GIBPeriod period = createPeriod(year, month);
+        if(!finalList.isEmpty()){
+            finalList.stream().forEach(posBilgileriTable-> createGIB(GIBCellRequestDto.builder()
+                    .posBankName(posBilgileriTable.getPosBankaAdi())
+                    .posBankVkn(posBilgileriTable.getPosBankaVkn())
+                    .posMemberCompany(posBilgileriTable.getPosUyeIsy())
+                    .sum(Double.parseDouble(posBilgileriTable.getToplam())).build(), period));
+            return getAllCellsByPeriod(period);
+        }else{
+            return null;
+        }
+    }
+
+    //TODO: Burada yeni bir dönem oluşturmuyoruz sadece parametre olarka aldığımız DB deki period dönem bilgisi ile token ile yeni sorguladığımız verileri DB ye kayıt etlmeliyiz.
+    private List<GIBCellResponseDto> updateGibPost(List<PosBilgileriTable> finalList, GIBPeriod gibPeriod) {
+
+        finalList.stream().forEach(posBilgileriTable -> createGIB(GIBCellRequestDto.builder()
+                .posBankName(posBilgileriTable.getPosBankaAdi())
+                .posBankVkn(posBilgileriTable.getPosBankaVkn())
+                .posMemberCompany(posBilgileriTable.getPosUyeIsy())
+                .sum(Double.parseDouble(posBilgileriTable.getToplam())).build(), gibPeriod));
+        return getAllCellsByPeriod(gibPeriod);
+    }
+
+    //TODO: burada database deki mevcut döneme ait verileri temizlemeliyiz
+    public boolean deleteByPeriod(GIBPeriod gibPeriod) {
+        Optional<List<GIBPost>> listOptional =  gibPostRepository.findAllOptionalByGibPeriodAndAndState(gibPeriod, State.ACTIVE);
+
+        listOptional.ifPresent(list -> {
+            list.forEach(item -> item.setState(State.INACTIVE));
+            gibPostRepository.saveAll(list);
+        });
+
+        return true;
+    }
+
+    private GIBPeriod createPeriod(String year, String month){
+        return gibPeriodService.createPeriod(year, month);
+    }
+    private GIBCellResponseDto createGIB(GIBCellRequestDto dto,GIBPeriod period){
+
+
+        GIBPost gibCell = gibPostRepository.save(GIBPost.builder()
+                .posBankName(dto.getPosBankName())
+                .posBankVkn(dto.getPosBankVkn())
+                .posMemberCompany(dto.getPosMemberCompany())
+                .sum(dto.getSum())
+                .gibPeriod(period)
+                .build());
+
+        return  GIBCellResponseDto.builder()
+                .id(gibCell.getId())
+                .posBankName(gibCell.getPosBankName())
+                .posBankVkn(gibCell.getPosBankVkn())
+                .posMemberCompany(gibCell.getPosMemberCompany())
+                .sum(gibCell.getSum())
+                .build();
+    }
+
+    public List<GIBCellResponseDto> getAllCellsByPeriod(GIBPeriod period){
+
+        List<GIBPost> list = gibPostRepository.findAllOptionalByGibPeriodAndAndState(period, State.ACTIVE).orElseThrow(()-> new GIBExceptionManager(ErrorType.FILE_NULL));
+
+        return list.stream().map(gibCell-> GIBCellResponseDto.builder()
+                        .posBankName(gibCell.getPosBankName())
+                        .posBankVkn(gibCell.getPosBankVkn())
+                        .posMemberCompany(gibCell.getPosMemberCompany())
+                        .sum(gibCell.getSum())
+                        .id(gibCell.getId())
+                        .build())
+                .collect(Collectors.toList());
+    }
+}
