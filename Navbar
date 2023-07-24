@@ -1,0 +1,249 @@
+
+<template>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <div class="card relative z-2" id="menuU">
+        <!--  -->
+        <!--  -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light ">
+            <div class="container-fluid py-1">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02"
+                    aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+                    <div class="navbar-toggler-icon"></div>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+                    <img alt="logo" src="../assets/yk_logo.png" height="40" class="mr-2 d-lg-flex d-none" />
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item" :class="{ active: isActive('gib') }">
+                            <router-link :to="{ name: 'gib' }" class="" style="text-decoration: none; color: white;">
+                                <a class="nav-link " :class="{ active_val: isActive('gib') }">
+                                    <i class="fa fa-solid fa-file-excel fa-l my-auto px-2" style="color: #ddb65c;"></i>
+                                    Gib İşlemleri
+                                </a>
+                            </router-link>
+                        </li>
+                        <li class="nav-item" :class="{ active: isActive('bayi') }">
+                            <router-link :to="{ name: 'bayi' }" class="" style="text-decoration: none;">
+                                <a class="nav-link" :class="{ active_val: isActive('bayi') }">
+                                    <i class="fa fa-light fa-shop fa-l my-auto px-2" style="color: #dfb658;"></i>
+                                    Bayi İşlemleri
+                                </a>
+                            </router-link>
+                        </li>
+ 
+                    </ul>
+
+                </div>
+                <div class="header-element "> <!-- Start::header-link|dropdown-toggle -->
+                    <a href="#" class="header-link dropdown-toggle text-decoration-none" id="mainHeaderProfile"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        <div class="d-flex align-items-center">
+                            <div class="me-sm-2 me-0 mt-auto">
+                                <img class="ProfilePhoto fluid rounded-2" :src="`${userInfo.photoURL}`" alt="Person"
+                                    width="45" height="45">
+                            </div>
+                            <div class="d-sm-block d-none">
+                                <!-- <p class="fw-semibold mb-0 lh-1">Json Taylor</p> -->
+                                <p class="fw-semibold mb-0 lh-1 mt-1 mb-1" style="height: 15px;">{{ userInfo.displayName
+                                }}
+                                </p>
+                                <span class="" style="height: 15px;">Hoşgeldiniz</span>
+                            </div>
+                        </div>
+                    </a> <!-- End::header-link|dropdown-toggle -->
+                    <ul class="main-header-dropdown dropdown-menu pt-0  overflow-hidden header-profile-dropdown dropdown-menu-end"
+                        aria-labelledby="mainHeaderProfile" style="">
+                        <li>
+
+                            <router-link :to="{ name: 'profile' }" class="" style="text-decoration: none;">
+                                <a class="dropdown-item d-flex">
+                                    <i class="pi pi-user fs-18 me-2 op-7 my-auto"></i>Profil
+                                </a>
+                            </router-link>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex" href="mail.html">
+                                <i class="pi pi-envelope fs-18 me-2 op-7 my-auto"></i>Mesaj
+                                <span class="badge bg-success-transparent ms-auto">25</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <router-link :to="{ name: 'calendar' }" class="" style="text-decoration: none;">
+                                <a class="dropdown-item d-flex">
+                                    <i class="pi pi-calendar fs-18 me-2 op-7 my-auto"></i>Takvim
+                                </a>
+                            </router-link>
+                        </li>
+
+                        <li>
+                            <router-link :to="{ name: 'login' }" class="" style="text-decoration: none;">
+                                <a class="dropdown-item d-flex" @click="logout">
+                                    <i class="pi pi-sign-out fs-18 me-2 op-7 my-auto" style="color: #de1735;"></i>Çıkış
+                                    Yap
+                                </a>
+                            </router-link>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+
+        <!--  -->
+
+
+        <!--  -->
+
+
+
+
+    </div>
+</template>
+
+<script>
+
+export default {
+
+    props: {
+        userInfo: {
+
+        }
+    },
+
+    data() {
+        return {
+            modalShow: false,
+            profilePhoto: this.userInfo.photoUrl,
+            activeRoute: null
+        }
+    },
+
+    methods: {
+        logout() {
+            localStorage.removeItem('currentUser');
+            //this.isAuthenticated = false;
+            getAuth().signOut()
+                .then(function () {
+                    // Sign-out successful.
+                    console.log("Çıkış yapıldı");
+                    console.log("Props : " + this.userInfo);
+                })
+                .catch(function (error) {
+                    // An error happened
+                });
+        },
+        isActive(routeName) {
+            return this.$route.name === routeName;
+        }
+    }
+}
+
+</script>
+
+<script setup>
+import { ref } from "vue";
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import firebaseConfig from '@/firebase/firebaseInit';
+const visible = ref(false);
+
+
+const items = ref([
+    {
+        label: 'Gib İşlemleri',
+        icon: 'fa fa-solid fa-file-excel fa-l p-0 ',
+        to: 'gib',
+        /*
+        items: [
+            {
+                label: 'Getir',
+                icon: 'pi pi-fw pi-file-import'
+            },
+            {
+                label: 'Aktar',
+                icon: 'pi pi-file-export'
+            }
+        ]
+        */
+    },
+    {
+        label: 'Bayi İşlemleri',
+        icon: "fa fa-light fa-shop fa-l p-0 ",
+        to: 'bayi',
+    }
+
+])
+</script>
+
+
+<style>
+.menu-utilisateur {
+    background-color: lightgrey;
+    height: 30px;
+}
+
+.p-menubar {
+    background-color: lightgrey;
+    padding: -10px;
+    height: 75px;
+}
+
+.p-menubar li {
+    background-color: rgba(249, 246, 244, 0);
+    padding-left: 5px;
+    border-radius: 50%;
+
+}
+
+.p-menubar li:active {
+    background-color: red;
+}
+
+.p-menubar li:hover {
+    background-color: bisque;
+}
+
+
+.p-menubar .p-menubar-root-list>.p-menuitem>.p-menuitem-link {
+    padding: 0.5rem 1rem !important;
+}
+
+.p-menubar .p-menuitem-link {
+    padding: 0.5rem 0.5rem !important;
+}
+
+.navbar {
+    position: relative;
+    z-index: 99;
+}
+
+.header-element {
+    position: absolute;
+    top: 1px;
+    right: 15px;
+    z-index: 100;
+    /* İstenilen bir değer seçin, diğer içeriklerin üzerinde kalacak */
+}
+
+.navbar {
+    position: relative;
+    z-index: 99;
+}
+
+.nav-item.active{
+    background-color: #e1e4e6;
+    /* İstediğiniz renk kodunu buraya girin */
+    color: #fff;
+    /* Arka plan rengi değiştiğinde metin rengini ayarlayın */
+}
+.active_val {
+    color: white;
+}
+
+.header-element {
+    position: absolute;
+    top: 1px;
+    right: 15px;
+    z-index: 100;
+    /* İstenilen bir değer seçin, diğer içeriklerin üzerinde kalacak */
+}
+</style>
